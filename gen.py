@@ -2,7 +2,7 @@ import yaml
 import re
 import glob
 import os
-
+from git import Repo
 
 class Object(object):
     pass
