@@ -8,17 +8,45 @@ import traceback
 import sys
 from inspect import currentframe, getframeinfo
 
-class Object(object):
-    pass
+class Environment(object):
+    def __init__(self):
+        
+        class VerInfo:
+            def __init__(self):
+                repo = Repo(search_parent_directories=True)
+                commits = list(repo.iter_commits("master", max_count=10000))
+                last, first = commits[0], commits[-1]
+                week= datetime.fromtimestamp(last.authored_date).strftime('%W')
+                day = datetime.fromtimestamp(last.authored_date).strftime('%j')
+                ddays = datetime.fromtimestamp(last.authored_date-first.authored_date).strftime('%d')
+                commit_count = len(commits)
+                custom = f'R{week}W{day}D{ddays}DD.{commit_count}CC'
+                normal = f'1.{ddays}.{commit_count}b'
+                
+                self.week= week
+                self.day= day
+                self.ddays= ddays
+                self.commit_count= commit_count
+                self.form_ver = f'1.{ddays}.{commit_count}b'
+                self.full_ver = f'R{week}W{day}D{ddays}DD.{commit_count}CC'
+                self.version = f'{self.form_ver} ({self.full_ver})'
+            def __str__(self):
+                return self.__repr__()
+            def __repr__(self):
+                return f'<Version {self.commit_count=} {self.week=} {self.day=} {self.ddays=} {self.form_ver=} {self.full_ver=}>'
+        self.verinfo = VerInfo()
+        self.form_ver =self.verinfo.form_ver
+        self.full_ver =self.verinfo.full_ver
+        self.version = self.verinfo.version
 
-
-environment = Object()
+env = Environment()
 patterns = ["/data/*.yml", "/data/**/*.yml"]
 for pattern in patterns:
     all_path = glob.glob(os.getcwd() + pattern)
     for path in all_path:
-        content = open(path).read()
-        setattr(environment, os.path.basename(path)[:-4], content)
+        raw = open(path).read()
+        content = yaml.safe_load(raw)
+        setattr(env, os.path.basename(path)[:-4], content)
         
 
 def process(page):
