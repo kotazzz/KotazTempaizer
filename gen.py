@@ -8,17 +8,71 @@ import traceback
 import sys
 from inspect import currentframe, getframeinfo
 
+def process(page):
+    temp_start = "<python>"
+    temp_end = "</python>"
+    regex = f"{temp_start}.+?{temp_end}"
+    search_result = re.findall(regex, page, re.DOTALL)[::-1]
+    count = len(search_result)
 
+    def get_replace(raw):
+        last = raw.pop(-1)
+        fname = f"python_script_{count-len(raw)}"
+
+        code = f"def {fname}():\n" + last[len(temp_start) : -len(temp_end)]
+        comp = compile(code, fname, "exec")
+        exec(comp, globals(), locals())
+
+        try:
+            results = "".join(map(str, locals()[fname]()))
+        except Exception as e:
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            formated = (
+                
+                "\n".join(
+                    "".join(
+                        [
+                            '"{filename}" ({lineno}): {content}\n  > {line}\n'.format(
+                                filename=t.filename,
+                                lineno=t.lineno,
+                                content=t.name,
+                                line=t.line,
+                            )
+                            for t in tb
+                        ]
+                    ).split("\n")[:-2]
+                )
+                + f"\n  > {code.split(chr(10))[list(tb)[-1].lineno-1]}\n{type(e).__name__}:  {e}"
+                
+            )
+            sep = '\n' + '-'*30  + '\n'
+            print(sep + code + sep + formated)
+            return "<pre><code>" + formated+ "</pre></code>"
+
+        else:
+            return results
+
+    while True:
+        if search_result != []:
+            page = re.sub(regex, get_replace(search_result), page, 1, flags=re.DOTALL)
+        else:
+            break
+    return page
+
+class Object:pass
+plugins = Object()
+
+data = Object()
+patterns = ["/data/*.yml", "/data/**/*.yml"]
+for pattern in patterns:
+    all_path = glob.glob(os.getcwd() + pattern)
+    for path in all_path:
+        raw = open(path).read()
+        content = yaml.safe_load(raw)
+        setattr(data, os.path.basename(path)[:-4], content)
+print('Data loaded')
 class Environment(object):
     def __init__(self):
-
-        patterns = ["/data/*.yml", "/data/**/*.yml"]
-        for pattern in patterns:
-            all_path = glob.glob(os.getcwd() + pattern)
-            for path in all_path:
-                raw = open(path).read()
-                content = yaml.safe_load(raw)
-                setattr(self, os.path.basename(path)[:-4], content)
 
         patterns = ["/templates/*.html", "/templates/**/*.html"]
         self.templates = {}
@@ -26,8 +80,14 @@ class Environment(object):
             all_path = glob.glob(os.getcwd() + pattern)
             for path in all_path:
                 content = open(path).read()
-                self.templates[os.path.basename(path)[:-5]] = content
+                self.templates[os.path.basename(path)[:-5]] = process(content)
 
+        patterns = ["/plugins/*.html", "/plugins/**/*.html"]
+        for pattern in patterns:
+            all_path = glob.glob(os.getcwd() + pattern)
+            for path in all_path:
+                content = open(path).read()
+                process(content)
         class VerInfo:
             def __init__(self):
                 repo = Repo(search_parent_directories=True)
@@ -64,62 +124,9 @@ class Environment(object):
 
 env = Environment()
 
-
-def process(page):
-    temp_start = "<python>"
-    temp_end = "</python>"
-    regex = f"{temp_start}.+?{temp_end}"
-    search_result = re.findall(regex, page, re.DOTALL)[::-1]
-    count = len(search_result)
-
-    def get_replace(raw):
-        last = raw.pop(-1)
-        fname = f"python_script_{count-len(raw)}"
-
-        code = f"def {fname}():\n" + last[len(temp_start) : -len(temp_end)]
-        comp = compile(code, fname, "exec")
-        exec(comp, globals(), locals())
-
-        try:
-            results = "".join(map(str, locals()[fname]()))
-        except Exception as e:
-            print(fname, e)
-            tb = traceback.extract_tb(sys.exc_info()[2])
-            return (
-                "<pre><code>"
-                + "\n".join(
-                    "".join(
-                        [
-                            '"{filename}" ({lineno}): {content}\n  > {line}\n'.format(
-                                filename=t.filename,
-                                lineno=t.lineno,
-                                content=t.name,
-                                line=t.line,
-                            )
-                            for t in tb
-                        ]
-                    ).split("\n")[:-2]
-                )
-                + f"\n  > {code.split(chr(10))[list(tb)[-1].lineno-1]}\n{type(e).__name__}:  {e}"
-                + "</pre></code>"
-            )
-
-        else:
-            return results
-
-    while True:
-        if search_result != []:
-            page = re.sub(regex, get_replace(search_result), page, 1, flags=re.DOTALL)
-        else:
-            break
-    return page
-
-
 # html = open("input.html").read()
 
 patterns = [
-    "/templates/*.html",
-    "/templates/**/*.html",
     "/src/*.html",
     "/src/**/*.html",
 ]

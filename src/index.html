@@ -19,18 +19,18 @@
             </span>
          </div>
       </nav>
-      <div class="jumbotron">
+      
          <python>
             yield f'''
-            <h1 class="display-4">{env.main['title']}</h1>
-            <p class="lead">{env.main['description']}</p>
-            <hr class="my-4">
-            <p>{env.main['fulldescription']}</p>
+            <div class="jumbotron">
+               <h1 class="display-4">{data.main['title']}</h1>
+               <p class="lead">{data.main['description']}</p>
+               <hr class="my-4">
+               <p>{data.main['fulldescription']}</p>
+            </div>
             '''
+            yield plugins.title('test')
+            yield env.templates['scripts']
          </python>
-      </div>
-      <python>
-          yield env.templates['scripts']
-      </python>
    </body>
 </html>
