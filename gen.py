@@ -1,10 +1,13 @@
 import yaml
 import re
+import glob
+import os
+
 class Object(object):
     pass
 
 environment = Object()
-environment.i = 1
+
 def process(page):
     temp_start = '<python>'
     temp_end = '</python>'
@@ -27,23 +30,20 @@ def process(page):
     return page
 
 # html = open("input.html").read()
-res = process('''
-<python>
-    yield 2
-    environment.i = 1
-    yield environment.i
-</python>
-<python>
-    yield 1
-</python>
-''')
-res2 = process('''
-<python>
-    yield environment.i
-</python>
-''')
 
-print(res, res2)
-with open("output.html", "w", encoding="utf-8") as output_file:
-    pass
-    # output_file.write(html)
+patterns = ['/src/*.html', '/src/**/*.html']
+for pattern in patterns:
+    all_path = glob.glob(os.getcwd()+pattern)
+    for path in all_path:
+        content = open(path).read()
+        result = process(content)
+        respath = path.replace('/src', '')
+        if not os.path.exists(os.path.dirname(respath)):
+            try:
+                os.makedirs(os.path.dirname(respath))
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+        with open(respath, "w", encoding="utf-8") as f:
+            f.write(result)
+
