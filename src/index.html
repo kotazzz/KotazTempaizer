@@ -1,15 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">
+    <style>
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            padding-top: 56px;
+            margin-top: -56px;
+        }
+    </style>
+    <title>Linux</title>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <a class="navbar-brand px-5" href="#top">Начало</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav mr-auto">
+                <!---->
+
+                <li class="nav-item active">
+                    <a class="nav-link" href="#main">
+                        Начало
+                    </a>
+                </li>
+
+            </ul>
+            <span class="navbar-text">
+                <python>
+                    repo = Repo(search_parent_directories=True)
+                    raw_data = list(repo.iter_commits("master", max_count=10000))
+                    last, first = raw_data[0], raw_data[-1]
+                    week= datetime.fromtimestamp(last.authored_date).strftime('%W')
+                    day = datetime.fromtimestamp(last.authored_date).strftime('%j')
+                    ddays = datetime.fromtimestamp(last.authored_date-first.authored_date).strftime('%d')
+                    commit_count = len(raw_data)
+                    custom = f'R{week}W{day}D{ddays}DD.{commit_count}CC'
+                    normal = f'1.{ddays}.{commit_count}b'
+                    return f'Page {normal} ({custom})'
+                </python>
+            </span>
+        </div>
+        
+    </nav>
+    <h1>.</h1>
+    <h1>Some title</h1>
     <python>
-        environment.test = "Hello, env!"
-        yield "Hello, world!"
+    1/0
     </python>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+            <script>hljs.highlightAll();</script>
+            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            <script src="https://code.iconify.design/2/2.1.0/iconify.min.js"></script>
+
+            <script>
+                $(function () {
+                    $('[data-toggle="tooltip"]').tooltip()
+                })
+            </script>
+
 </body>
+
 </html>

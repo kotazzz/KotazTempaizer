@@ -3,13 +3,23 @@ import re
 import glob
 import os
 from git import Repo
+from datetime import datetime
+import traceback
+import sys
+from inspect import currentframe, getframeinfo
 
 class Object(object):
     pass
 
 
 environment = Object()
-
+patterns = ["/data/*.yml", "/data/**/*.yml"]
+for pattern in patterns:
+    all_path = glob.glob(os.getcwd() + pattern)
+    for path in all_path:
+        content = open(path).read()
+        setattr(environment, os.path.basename(path)[:-4], content)
+        
 
 def process(page):
     temp_start = "<python>"
@@ -21,10 +31,30 @@ def process(page):
     def get_replace(raw):
         last = raw.pop(-1)
         fname = f"python_script_{count-len(raw)}"
+        
         code = f"def {fname}():\n" + last[len(temp_start) : -len(temp_end)]
-        exec(code, globals(), locals())
-        results = "".join(map(str, locals()[fname]()))
-        return results
+        comp = compile(code, fname, 'exec')
+        exec(comp, globals(), locals())
+        
+        try:
+            results = "".join(map(str, locals()[fname]()))
+        except Exception as e:
+            print(fname, e)
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            return '<pre><code>'+'\n'.join(
+                ''.join(
+                ['"{filename}" ({lineno}): {content}\n  > {line}\n'.format(
+                    filename= t.filename,
+                    lineno= t.lineno,
+                    content= t.name,
+                    line= t.line,
+                ) for t in tb]
+            ).split('\n')[:-2]
+            )+f'\n  > {code.split(chr(10))[list(tb)[-1].lineno-1]}\n{type(e).__name__}:  {e}'+'</pre></code>'
+
+            
+        else:
+            return results
 
     while True:
         if search_result != []:
