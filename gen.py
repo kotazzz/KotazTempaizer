@@ -1,22 +1,22 @@
 import yaml
 import re
+class Object(object):
+    pass
 
-environment, functions = {}, {}
-
+environment = Object()
+environment.i = 1
 def process(page):
     temp_start = '<python>'
     temp_end = '</python>'
     regex = f"{temp_start}.+?{temp_end}"
-    search_result = re.findall(regex, page, re.DOTALL)
+    search_result = re.findall(regex, page, re.DOTALL)[::-1]
     count = len(search_result)
     def get_replace(raw):
         last = raw.pop(-1)
         fname = f'python_script_{count-len(raw)}'
         code = f"def {fname}():\n" + last[len(temp_start):-len(temp_end)]
-        print(fname)
-        exec(code, environment, functions)
-        results = ''.join(map(str, functions[fname]()))
-        print(list(environment.keys()), list(functions.keys()))
+        exec(code, globals(), locals())
+        results = ''.join(map(str, locals()[fname]()))
         return results
 
     while True:
@@ -29,16 +29,21 @@ def process(page):
 # html = open("input.html").read()
 res = process('''
 <python>
-    global i
-    i = 1
-    yield i
+    yield 2
+    environment.i = 1
+    yield environment.i
 </python>
 <python>
-    yield i
+    yield 1
+</python>
+''')
+res2 = process('''
+<python>
+    yield environment.i
 </python>
 ''')
 
-print(res)
+print(res, res2)
 with open("output.html", "w", encoding="utf-8") as output_file:
     pass
     # output_file.write(html)
