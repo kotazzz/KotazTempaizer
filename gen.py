@@ -11,7 +11,7 @@ from inspect import currentframe, getframeinfo
 
 class Environment(object):
     def __init__(self):
-        
+
         patterns = ["/data/*.yml", "/data/**/*.yml"]
         for pattern in patterns:
             all_path = glob.glob(os.getcwd() + pattern)
@@ -27,6 +27,7 @@ class Environment(object):
             for path in all_path:
                 content = open(path).read()
                 self.templates[os.path.basename(path)[:-5]] = content
+
         class VerInfo:
             def __init__(self):
                 repo = Repo(search_parent_directories=True)
@@ -62,7 +63,6 @@ class Environment(object):
 
 
 env = Environment()
-
 
 
 def process(page):
@@ -117,7 +117,12 @@ def process(page):
 
 # html = open("input.html").read()
 
-patterns = ["/templates/*.html", "/templates/**/*.html", "/src/*.html", "/src/**/*.html" ]
+patterns = [
+    "/templates/*.html",
+    "/templates/**/*.html",
+    "/src/*.html",
+    "/src/**/*.html",
+]
 for pattern in patterns:
     all_path = glob.glob(os.getcwd() + pattern)
     for path in all_path:
