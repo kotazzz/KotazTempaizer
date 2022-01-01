@@ -3,21 +3,22 @@ import os
 import re
 import sys
 import traceback
+import types
 from datetime import datetime
 from inspect import currentframe, getframeinfo
-import types
+
 import yaml
 from git import Repo
 
-
+from typing import Optional, Annotated
 class TemplateProcessor:
-    def __init__(self, open_tag="<python>", close_tag="</python>"):
+    def __init__(self, open_tag:Optional[Annotated[str, "regex"]]="<python>", close_tag:Optional[Annotated[str, "regex"]]="</python>"):
         self.start = open_tag
         self.end = close_tag
         self.regex = f"{open_tag}.+?{close_tag}"
         self.global_counter = 0
 
-    def process_tag(self, func_body, auto_str=True, insert={}):
+    def process_tag(self, func_body:Annotated[str, "tag"], auto_str:Optional[Annotated[bool, "flag"]]=True, insert:Optional[Annotated[dict, "globals_insert"]]={}):
         self.global_counter += 1
         function_name = f"pytag_{self.global_counter}"
         code = f"def {function_name}():\n" + func_body
@@ -53,7 +54,7 @@ class TemplateProcessor:
         else:
             return results
 
-    def process(self, text, insert={}):
+    def process(self, text:Annotated[str, "multiline_text"], insert:Optional[Annotated[dict, "globals_insert"]]={}):
         search_result = re.findall(self.regex, text, re.DOTALL)
         search_result = search_result[::-1]
         max_count = len(search_result)
@@ -79,13 +80,13 @@ class TemplateProcessor:
 
 
 class Loader:
-    def get_paths(self, *path_patterns):
+    def get_paths(self, *path_patterns:Annotated[list[str], "list_of_path_patterns"]):
         result = []
         for pattern in path_patterns:
             result += glob.glob(os.getcwd() + pattern)
         return result
 
-    def load_data(self, paths):
+    def load_data(self, paths:Annotated[list[str], "list_of_full_paths"]):
         data = types.SimpleNamespace()
         for path in paths:
             raw = open(path).read()
@@ -95,7 +96,7 @@ class Loader:
             setattr(data, filename[: -len(ext)], value)
         return data
 
-    def load_plugins(self, paths):
+    def load_plugins(self, paths:Annotated[list[str], "list_of_full_paths"]):
         plugins = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -111,7 +112,7 @@ class Loader:
             setattr(plugins, filename[: -len(ext)], plugin_namespace)
         return plugins
 
-    def load_templates(self, paths, env={}):
+    def load_templates(self, paths:Annotated[list[str], "list_of_full_paths"], env:Optional[Annotated[dict, "globals_insert"]]={}):
         templates = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -156,9 +157,9 @@ class VerInfo:
 class Environment(object):
     def __init__(
         self,
-        data_path_pattern=["/data/*.yml", "/data/**/*.yml"],
-        plugin_path_pattern=["/plugins/*.html", "/plugins/**/*.html"],
-        template_path_pattern=["/templates/*.html", "/templates/**/*.html"],
+        data_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/data/*.yml", "/data/**/*.yml"],
+        plugin_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/plugins/*.html", "/plugins/**/*.html"],
+        template_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/templates/*.html", "/templates/**/*.html"],
     ):
         loader = Loader()
         data_paths = loader.get_paths(*data_path_pattern)
