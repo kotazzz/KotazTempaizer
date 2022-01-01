@@ -12,13 +12,26 @@ from git import Repo
 
 from typing import Optional, Annotated
 class TemplateProcessor:
-    def __init__(self, open_tag:Optional[Annotated[str, "regex"]]="<python>", close_tag:Optional[Annotated[str, "regex"]]="</python>"):
+    def __init__(self, open_tag:Optional[Annotated[str, "regex"]]="<python>", close_tag:Optional[Annotated[str, "regex"]]="</python>") -> None:
+        """Процессор, обрабатывающий текст, содержащий "островки" кода, которые будут заменены на результат работы этого кода
+
+        Args:
+            open_tag (str, optional): Открывайющий код тег. Defaults to "<python>".
+            close_tag (str, optional): Закрывающий код тег. Defaults to "</python>".
+        """
         self.start = open_tag
         self.end = close_tag
         self.regex = f"{open_tag}.+?{close_tag}"
         self.global_counter = 0
 
-    def process_tag(self, func_body:Annotated[str, "tag"], auto_str:Optional[Annotated[bool, "flag"]]=True, insert:Optional[Annotated[dict, "globals_insert"]]={}):
+    def process_tag(self, func_body:Annotated[str, "tag"], auto_str:Optional[Annotated[bool, "flag"]]=True, insert:Optional[Annotated[dict, "globals_insert"]]={}) -> Annotated[str, "exec_output"]:
+        """[summary]
+
+        Returns
+        -------
+        [type]
+            [description]
+        """
         self.global_counter += 1
         function_name = f"pytag_{self.global_counter}"
         code = f"def {function_name}():\n" + func_body
@@ -54,7 +67,7 @@ class TemplateProcessor:
         else:
             return results
 
-    def process(self, text:Annotated[str, "multiline_text"], insert:Optional[Annotated[dict, "globals_insert"]]={}):
+    def process(self, text:Annotated[str, "multiline_text"], insert:Optional[Annotated[dict, "globals_insert"]]={}) -> Annotated[str, "exec_output"]:
         search_result = re.findall(self.regex, text, re.DOTALL)
         search_result = search_result[::-1]
         max_count = len(search_result)
@@ -80,13 +93,13 @@ class TemplateProcessor:
 
 
 class Loader:
-    def get_paths(self, *path_patterns:Annotated[list[str], "list_of_path_patterns"]):
+    def get_paths(self, *path_patterns:Annotated[list[str], "list_of_path_patterns"]) -> Annotated[list[str], "full_paths"]:
         result = []
         for pattern in path_patterns:
             result += glob.glob(os.getcwd() + pattern)
         return result
 
-    def load_data(self, paths:Annotated[list[str], "list_of_full_paths"]):
+    def load_data(self, paths:Annotated[list[str], "list_of_full_paths"]) -> Annotated[types.SimpleNamespace, "data"]:
         data = types.SimpleNamespace()
         for path in paths:
             raw = open(path).read()
@@ -96,7 +109,7 @@ class Loader:
             setattr(data, filename[: -len(ext)], value)
         return data
 
-    def load_plugins(self, paths:Annotated[list[str], "list_of_full_paths"]):
+    def load_plugins(self, paths:Annotated[list[str], "list_of_full_paths"])-> Annotated[types.SimpleNamespace, "plugins"]:
         plugins = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -112,7 +125,7 @@ class Loader:
             setattr(plugins, filename[: -len(ext)], plugin_namespace)
         return plugins
 
-    def load_templates(self, paths:Annotated[list[str], "list_of_full_paths"], env:Optional[Annotated[dict, "globals_insert"]]={}):
+    def load_templates(self, paths:Annotated[list[str], "list_of_full_paths"], env:Optional[Annotated[dict, "globals_insert"]]={})-> Annotated[types.SimpleNamespace, "templates"]:
         templates = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -126,7 +139,7 @@ class Loader:
 
 
 class VerInfo:
-    def __init__(self):
+    def __init__(self) -> None:
         repo = Repo(search_parent_directories=True)
         commits = list(repo.iter_commits("master", max_count=10000))
         last, first = commits[0], commits[-1]
@@ -160,7 +173,7 @@ class Environment(object):
         data_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/data/*.yml", "/data/**/*.yml"],
         plugin_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/plugins/*.html", "/plugins/**/*.html"],
         template_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/templates/*.html", "/templates/**/*.html"],
-    ):
+    ) -> None:
         loader = Loader()
         data_paths = loader.get_paths(*data_path_pattern)
         plugin_paths = loader.get_paths(*plugin_path_pattern)
@@ -175,7 +188,7 @@ class Environment(object):
         self.version = self.verinfo.version
 
 
-def compile_site(*paths):
+def compile_site(*paths) -> None:
 
     global env
     env = Environment()

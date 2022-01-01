@@ -11,6 +11,7 @@ PyYAML = "^6.0"
 GitPython = "^3.1.24"
 
 [tool.poetry.dev-dependencies]
+pyment = "^0.3.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
