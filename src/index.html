@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
     <python>
-        yield env.templates['head']
+        yield env.templates.head
     </python>
    <body>
       <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
@@ -23,14 +23,13 @@
          <python>
             yield f'''
             <div class="jumbotron">
-               <h1 class="display-4">{data.main['title']}</h1>
-               <p class="lead">{data.main['description']}</p>
+               <h1 class="display-4">{env.data.main['title']}</h1>
+               <p class="lead">{env.data.main['description']}</p>
                <hr class="my-4">
-               <p>{data.main['fulldescription']}</p>
+               <p>{env.data.main['fulldescription']}</p>
             </div>
             '''
-            yield plugins.title('test')
-            yield env.templates['scripts']
+            yield env.plugins.title.title('test')
          </python>
    </body>
 </html>
