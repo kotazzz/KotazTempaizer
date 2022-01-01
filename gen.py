@@ -9,68 +9,75 @@ import types
 import yaml
 from git import Repo
 
+
 class TemplateProcessor:
-    def __init__(self, open_tag = '<python>', close_tag = '</python>'):
+    def __init__(self, open_tag="<python>", close_tag="</python>"):
         self.start = open_tag
         self.end = close_tag
         self.regex = f"{open_tag}.+?{close_tag}"
         self.global_counter = 0
 
-    def process_tag(self, func_body, auto_str = True, insert = {}):
-            self.global_counter += 1
-            function_name = f"pytag_{self.global_counter}"
-            code = f"def {function_name}():\n" + func_body
-            compiled = compile(code, function_name, "exec")
-            exec(compiled, dict(insert, **globals()), locals())
-            try:
-                if auto_str:
-                    results = "".join(map(str, locals()[function_name]()))
-                else:
-                    results = list(locals()[function_name]())
-            except Exception as e:
-                tb = traceback.extract_tb(sys.exc_info()[2])
-                tb_lines = [
-                                '"{filename}" ({lineno}): {content}\n  > {line}\n'.format(
-                                    filename=t.filename,
-                                    lineno=t.lineno,
-                                    content=t.name,
-                                    line=t.line,
-                                )
-                                for t in tb
-                            ]
-                code_lines = code.split(chr(10))
-                formated = (
-                    "\n".join(
-                        "".join(tb_lines).split("\n")[:-2]
-                    )
-                    + f"\n  > {code_lines[list(tb)[-1].lineno-1]}"
-                    + f"\n{type(e).__name__}:  {e}"
-                )
-                sep = "\n" + "-" * 30 + "\n"
-                print(code +'\n'+ formated+sep)
-
-                return "<pre><code>" + formated + "</pre></code>"
-
+    def process_tag(self, func_body, auto_str=True, insert={}):
+        self.global_counter += 1
+        function_name = f"pytag_{self.global_counter}"
+        code = f"def {function_name}():\n" + func_body
+        compiled = compile(code, function_name, "exec")
+        exec(compiled, dict(insert, **globals()), locals())
+        try:
+            if auto_str:
+                results = "".join(map(str, locals()[function_name]()))
             else:
-                return results
+                results = list(locals()[function_name]())
+        except Exception as e:
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            tb_lines = [
+                '"{filename}" ({lineno}): {content}\n  > {line}\n'.format(
+                    filename=t.filename,
+                    lineno=t.lineno,
+                    content=t.name,
+                    line=t.line,
+                )
+                for t in tb
+            ]
+            code_lines = code.split(chr(10))
+            formated = (
+                "\n".join("".join(tb_lines).split("\n")[:-2])
+                + f"\n  > {code_lines[list(tb)[-1].lineno-1]}"
+                + f"\n{type(e).__name__}:  {e}"
+            )
+            sep = "\n" + "-" * 30 + "\n"
+            print(code + "\n" + formated + sep)
 
-    def process(self, text, insert = {}):
+            return "<pre><code>" + formated + "</pre></code>"
+
+        else:
+            return results
+
+    def process(self, text, insert={}):
         search_result = re.findall(self.regex, text, re.DOTALL)
         search_result = search_result[::-1]
         max_count = len(search_result)
         self.global_counter = 0
 
         process_tag = self.process_tag
-    
+
         while True:
             if search_result != []:
                 last_res = search_result.pop(-1)
                 raw_code = last_res[len(self.start) : -len(self.end)]
-                text = re.sub(self.regex, process_tag(raw_code, insert=insert), text, 1, flags=re.DOTALL)
+                text = re.sub(
+                    self.regex,
+                    process_tag(raw_code, insert=insert),
+                    text,
+                    1,
+                    flags=re.DOTALL,
+                )
             else:
                 break
 
         return text
+
+
 class Loader:
     def get_paths(self, *path_patterns):
         result = []
@@ -84,10 +91,9 @@ class Loader:
             raw = open(path).read()
             value = yaml.safe_load(raw)
             filename = os.path.basename(path)
-            ext = '.yml'
-            setattr(data, filename[:-len(ext)], value)
+            ext = ".yml"
+            setattr(data, filename[: -len(ext)], value)
         return data
-
 
     def load_plugins(self, paths):
         plugins = types.SimpleNamespace()
@@ -101,19 +107,22 @@ class Loader:
                 setattr(plugin_namespace, func.__name__, func)
 
             filename = os.path.basename(path)
-            ext= '.html'
-            setattr(plugins, filename[:-len(ext)], plugin_namespace)
+            ext = ".html"
+            setattr(plugins, filename[: -len(ext)], plugin_namespace)
         return plugins
 
-    def load_templates(self, paths, env = {}):
+    def load_templates(self, paths, env={}):
         templates = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
             content = open(path).read()
             filename = os.path.basename(path)
-            ext = '.html'
-            setattr(templates, filename[:-len(ext)], tproc.process(content, insert=env))
+            ext = ".html"
+            setattr(
+                templates, filename[: -len(ext)], tproc.process(content, insert=env)
+            )
         return templates
+
 
 class VerInfo:
     def __init__(self):
@@ -142,17 +151,22 @@ class VerInfo:
 
     def __repr__(self):
         return f"<Version {self.commit_count=} {self.week=} {self.day=} {self.ddays=} {self.form_ver=} {self.full_ver=}>"
+
+
 class Environment(object):
-    def __init__(self, data_path_pattern = ["/data/*.yml", "/data/**/*.yml"],
-    plugin_path_pattern = ["/plugins/*.html", "/plugins/**/*.html"], 
-    template_path_pattern = ["/templates/*.html", "/templates/**/*.html"]):
+    def __init__(
+        self,
+        data_path_pattern=["/data/*.yml", "/data/**/*.yml"],
+        plugin_path_pattern=["/plugins/*.html", "/plugins/**/*.html"],
+        template_path_pattern=["/templates/*.html", "/templates/**/*.html"],
+    ):
         loader = Loader()
         data_paths = loader.get_paths(*data_path_pattern)
         plugin_paths = loader.get_paths(*plugin_path_pattern)
         template_paths = loader.get_paths(*template_path_pattern)
         self.data = loader.load_data(data_paths)
         self.plugins = loader.load_plugins(plugin_paths)
-        self.templates = loader.load_templates(template_paths, {'env':self})
+        self.templates = loader.load_templates(template_paths, {"env": self})
 
         self.verinfo = VerInfo()
         self.form_ver = self.verinfo.form_ver
@@ -161,7 +175,7 @@ class Environment(object):
 
 
 def compile_site(*paths):
-    
+
     global env
     env = Environment()
     loader = Loader()
@@ -171,7 +185,7 @@ def compile_site(*paths):
         content = open(filepath).read()
         result = tproc.process(content)
 
-        export_file  = filepath.replace("/src/", "/")
+        export_file = filepath.replace("/src/", "/")
         export_folder = os.path.dirname(export_file)
         if not os.path.exists(export_folder):
             try:
@@ -181,12 +195,13 @@ def compile_site(*paths):
                     raise
         with open(export_file, "w", encoding="utf-8") as f:
             f.write(result)
+
+
 compile_site(
-        "/src/*.html",
-        "/src/**/*.html",
-    )
+    "/src/*.html",
+    "/src/**/*.html",
+)
 # 1) Load and proc data
-# 2) Load and proc plugins 
+# 2) Load and proc plugins
 # 3) Load and proc templates (req data plugins)
 # 4) Load and proc src (req data plugins templates)
-
