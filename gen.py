@@ -8,6 +8,7 @@ import traceback
 import sys
 from inspect import currentframe, getframeinfo
 
+
 def process(page):
     temp_start = "<python>"
     temp_end = "</python>"
@@ -28,7 +29,6 @@ def process(page):
         except Exception as e:
             tb = traceback.extract_tb(sys.exc_info()[2])
             formated = (
-                
                 "\n".join(
                     "".join(
                         [
@@ -43,11 +43,10 @@ def process(page):
                     ).split("\n")[:-2]
                 )
                 + f"\n  > {code.split(chr(10))[list(tb)[-1].lineno-1]}\n{type(e).__name__}:  {e}"
-                
             )
-            sep = '\n' + '-'*30  + '\n'
+            sep = "\n" + "-" * 30 + "\n"
             print(sep + code + sep + formated)
-            return "<pre><code>" + formated+ "</pre></code>"
+            return "<pre><code>" + formated + "</pre></code>"
 
         else:
             return results
@@ -59,7 +58,11 @@ def process(page):
             break
     return page
 
-class Object:pass
+
+class Object:
+    pass
+
+
 plugins = Object()
 
 data = Object()
@@ -70,7 +73,9 @@ for pattern in patterns:
         raw = open(path).read()
         content = yaml.safe_load(raw)
         setattr(data, os.path.basename(path)[:-4], content)
-print('Data loaded')
+print("Data loaded")
+
+
 class Environment(object):
     def __init__(self):
 
@@ -88,6 +93,7 @@ class Environment(object):
             for path in all_path:
                 content = open(path).read()
                 process(content)
+
         class VerInfo:
             def __init__(self):
                 repo = Repo(search_parent_directories=True)
