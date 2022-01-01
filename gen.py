@@ -10,27 +10,41 @@ from inspect import currentframe, getframeinfo
 import yaml
 from git import Repo
 
-from typing import Optional, Annotated
+from typing import Optional
+
+
 class TemplateProcessor:
-    def __init__(self, open_tag:Optional[Annotated[str, "regex"]]="<python>", close_tag:Optional[Annotated[str, "regex"]]="</python>") -> None:
+    def __init__(
+        self,
+        open_tag: Optional[str] = "<python>",
+        close_tag: Optional[str] = "</python>",
+    ) -> None:
         """Процессор, обрабатывающий текст, содержащий "островки" кода, которые будут заменены на результат работы этого кода
 
-        Args:
-            open_tag (str, optional): Открывайющий код тег. Defaults to "<python>".
-            close_tag (str, optional): Закрывающий код тег. Defaults to "</python>".
+        :param open_tag: Открывайющий код тег. Defaults to "<python>".
+        :type open_tag: str
+        :param close_tag: Закрывающий код тег. Defaults to "</python>".
+        :type close_tag: str
+
         """
         self.start = open_tag
         self.end = close_tag
         self.regex = f"{open_tag}.+?{close_tag}"
         self.global_counter = 0
 
-    def process_tag(self, func_body:Annotated[str, "tag"], auto_str:Optional[Annotated[bool, "flag"]]=True, insert:Optional[Annotated[dict, "globals_insert"]]={}) -> Annotated[str, "exec_output"]:
-        """[summary]
+    def process_tag(
+        self,
+        func_body: str,
+        auto_str: Optional[bool] = True,
+        insert: Optional[dict] = {},
+    ) -> str:
+        """Выполняет код в exec, во время ошибок возвращает html тег с текстом ошибки, во время успешного выполнения - результат
 
-        Returns
-        -------
-        [type]
-            [description]
+        :param func_body:str: Тело функции, которая будет запущена
+        :param auto_str:Optional[bool]: Преобразовывать ли набор результатов в одну строку (Default value = True)
+        :param insert:Optional[dict]: Дополнительный объект, который будет в словаре globals, предаваемом в exec (Default value = {})
+
+
         """
         self.global_counter += 1
         function_name = f"pytag_{self.global_counter}"
@@ -67,7 +81,13 @@ class TemplateProcessor:
         else:
             return results
 
-    def process(self, text:Annotated[str, "multiline_text"], insert:Optional[Annotated[dict, "globals_insert"]]={}) -> Annotated[str, "exec_output"]:
+    def process(self, text: str, insert: Optional[dict] = {}) -> str:
+        """Обрабатывает текст текст, содержащий островки кода
+
+        :param text:str: Исходный текст
+        :param insert:Optional[dict]: Дополнительный объект, который будет в словаре globals, предаваемом в exec (Default value = {})
+
+        """
         search_result = re.findall(self.regex, text, re.DOTALL)
         search_result = search_result[::-1]
         max_count = len(search_result)
@@ -93,13 +113,25 @@ class TemplateProcessor:
 
 
 class Loader:
-    def get_paths(self, *path_patterns:Annotated[list[str], "list_of_path_patterns"]) -> Annotated[list[str], "full_paths"]:
+    """ """
+
+    def get_paths(self, *path_patterns: list[str]) -> list[str]:
+        """Получить все пути к файлам по переданным паттернам
+
+        :param *path_patterns:list[str]: Список паттернов путей
+
+        """
         result = []
         for pattern in path_patterns:
             result += glob.glob(os.getcwd() + pattern)
         return result
 
-    def load_data(self, paths:Annotated[list[str], "list_of_full_paths"]) -> Annotated[types.SimpleNamespace, "data"]:
+    def load_data(self, paths: list[str]) -> types.SimpleNamespace:
+        """Загрузить все данные из файлов по перечисленным путям
+
+        :param paths:list[str]: пути файлов .yml, которые надо загрузить 
+
+        """
         data = types.SimpleNamespace()
         for path in paths:
             raw = open(path).read()
@@ -109,7 +141,12 @@ class Loader:
             setattr(data, filename[: -len(ext)], value)
         return data
 
-    def load_plugins(self, paths:Annotated[list[str], "list_of_full_paths"])-> Annotated[types.SimpleNamespace, "plugins"]:
+    def load_plugins(self, paths: list[str]) -> types.SimpleNamespace:
+        """Загрузить все функции и плагины из файлов по перечисленным путям
+
+        :param paths:list[str]: пути файлов .html, которые надо загрузить
+
+        """
         plugins = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -125,7 +162,13 @@ class Loader:
             setattr(plugins, filename[: -len(ext)], plugin_namespace)
         return plugins
 
-    def load_templates(self, paths:Annotated[list[str], "list_of_full_paths"], env:Optional[Annotated[dict, "globals_insert"]]={})-> Annotated[types.SimpleNamespace, "templates"]:
+    def load_templates(self, paths: list[str], env: Optional[dict] = {}) -> types.SimpleNamespace:
+        """Загрузить все шаблоны из файлов по перечисленным путям
+
+        :param paths:list[str]: пути файлов .html, которые надо загрузить
+        :param env:Optional[dict]: Дополнительные объекты для процессора шаблонов (Default value = {})
+
+        """
         templates = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -139,6 +182,8 @@ class Loader:
 
 
 class VerInfo:
+    """ Содержит некоторую информацию о репозитории, в котором находится скрипт """
+
     def __init__(self) -> None:
         repo = Repo(search_parent_directories=True)
         commits = list(repo.iter_commits("master", max_count=10000))
@@ -168,11 +213,16 @@ class VerInfo:
 
 
 class Environment(object):
+    """ Среда выполнения для шаблонного процессора, связывающий разные его части"""
+
     def __init__(
         self,
-        data_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/data/*.yml", "/data/**/*.yml"],
-        plugin_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/plugins/*.html", "/plugins/**/*.html"],
-        template_path_pattern:Annotated[list[str], "list_of_path_patterns"]=["/templates/*.html", "/templates/**/*.html"],
+        data_path_pattern: list[str] = ["/data/*.yml", "/data/**/*.yml"],
+        plugin_path_pattern: list[str] = ["/plugins/*.html", "/plugins/**/*.html"],
+        template_path_pattern: list[str] = [
+            "/templates/*.html",
+            "/templates/**/*.html",
+        ],
     ) -> None:
         loader = Loader()
         data_paths = loader.get_paths(*data_path_pattern)
@@ -189,6 +239,11 @@ class Environment(object):
 
 
 def compile_site(*paths) -> None:
+    """Собрать сайт по исходникам, которые перечислены
+
+    :param *paths:
+
+    """
 
     global env
     env = Environment()
