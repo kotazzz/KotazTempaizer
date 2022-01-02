@@ -1,25 +1,17 @@
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">
     <style>
-       h1,
-       h2,
-       h3,
-       h4,
-       h5,
-       h6 {
+      h1,h2,h3,h4,h5,h6 {
        padding-top: 56px;
        margin-top: -56px;
-       }
+      }
     </style>
     <title>
        <python>
-          yield 'Title'
+          yield env.data.main['title']
        </python>
-       <!--! DATA IN TEMPLATES -->
     </title>
  </head>
