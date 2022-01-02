@@ -1,11 +1,14 @@
+import functools
 import glob
 import os
 import re
 import sys
 import traceback
 import types
+import logging
 from datetime import datetime
 from inspect import currentframe, getframeinfo
+
 
 import yaml
 from git import Repo
@@ -13,7 +16,45 @@ from git import Repo
 from typing import Optional
 
 
-class TemplateProcessor:
+class Logger(type):
+    
+
+    @staticmethod
+    def _decorator(fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            form = lambda x: [type(i).__name__.split(".")[-1] for i in x]
+            current = f'{fun.__name__} {form(kwargs.values())} {form(args)}'
+            logging.info(f'{current}')
+            
+            return fun(*args, **kwargs)
+
+        return wrapper
+
+    def __new__(mcs, name, bases, attrs):
+
+        logging.basicConfig(
+            filename="main.log",
+            format="%(asctime)s %(levelname)s: %(message)s",
+            encoding="utf-8",
+            level=logging.INFO,
+            datefmt="%m/%d/%Y %I:%M:%S %p",
+        )
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+
+        for key in attrs.keys():
+            if callable(attrs[key]) and not key.startswith('__'):
+                # if attrs[key] is callable, then we can easily wrap it with decorator
+                # and substitute in the future attrs
+                # only for extra clarity (though it is wider type than function)
+                fun = attrs[key]
+                attrs[key] = Logger._decorator(fun)
+        # and then invoke __new__ in type metaclass
+        return super().__new__(mcs, name, bases, attrs)
+
+
+class TemplateProcessor(metaclass=Logger):
     def __init__(
         self,
         open_tag: Optional[str] = "<python>",
@@ -112,7 +153,7 @@ class TemplateProcessor:
         return text
 
 
-class Loader:
+class Loader(metaclass=Logger):
     """ """
 
     def get_paths(self, *path_patterns: list[str]) -> list[str]:
@@ -129,7 +170,7 @@ class Loader:
     def load_data(self, paths: list[str]) -> types.SimpleNamespace:
         """Загрузить все данные из файлов по перечисленным путям
 
-        :param paths:list[str]: пути файлов .yml, которые надо загрузить 
+        :param paths:list[str]: пути файлов .yml, которые надо загрузить
 
         """
         data = types.SimpleNamespace()
@@ -162,7 +203,9 @@ class Loader:
             setattr(plugins, filename[: -len(ext)], plugin_namespace)
         return plugins
 
-    def load_templates(self, paths: list[str], env: Optional[dict] = {}) -> types.SimpleNamespace:
+    def load_templates(
+        self, paths: list[str], env: Optional[dict] = {}
+    ) -> types.SimpleNamespace:
         """Загрузить все шаблоны из файлов по перечисленным путям
 
         :param paths:list[str]: пути файлов .html, которые надо загрузить
@@ -181,8 +224,8 @@ class Loader:
         return templates
 
 
-class VerInfo:
-    """ Содержит некоторую информацию о репозитории, в котором находится скрипт """
+class VerInfo(metaclass=Logger):
+    """Содержит некоторую информацию о репозитории, в котором находится скрипт"""
 
     def __init__(self) -> None:
         repo = Repo(search_parent_directories=True)
@@ -212,8 +255,8 @@ class VerInfo:
         return f"<Version {self.commit_count=} {self.week=} {self.day=} {self.ddays=} {self.form_ver=} {self.full_ver=}>"
 
 
-class Environment(object):
-    """ Среда выполнения для шаблонного процессора, связывающий разные его части"""
+class Environment(object, metaclass=Logger):
+    """Среда выполнения для шаблонного процессора, связывающий разные его части"""
 
     def __init__(
         self,
