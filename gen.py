@@ -280,11 +280,33 @@ class Environment(object, metaclass=Logger):
         self.full_ver = self.verinfo.full_ver
         self.version = self.verinfo.version
 
+def compile_file(from_path, to_path, tproc):
+    """Обработать файл и сохранить в новом месте
+
+    :param from_path: путь исходного файла
+    :param to_path: путь файла для сохранения
+    :param tproc: процессор
+
+    """
+    content = open(from_path).read()
+    result = tproc.process(content)
+
+    
+    export_folder = os.path.dirname(to_path)
+    if not os.path.exists(export_folder):
+        try:
+            os.makedirs(export_folder)
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    with open(to_path, "w", encoding="utf-8") as f:
+        f.write(result)
+
 
 def compile_site(*paths) -> None:
     """Собрать сайт по исходникам, которые перечислены
 
-    :param *paths:
+    :param *paths: пути исходников
 
     """
 
@@ -293,21 +315,9 @@ def compile_site(*paths) -> None:
     loader = Loader()
     files = loader.get_paths(*paths)
     tproc = TemplateProcessor()
-    for filepath in files:
-        content = open(filepath).read()
-        result = tproc.process(content)
-
-        export_file = filepath.replace("/src/", "/")
-        export_folder = os.path.dirname(export_file)
-        if not os.path.exists(export_folder):
-            try:
-                os.makedirs(export_folder)
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-        with open(export_file, "w", encoding="utf-8") as f:
-            f.write(result)
-
+    for from_path in files:
+        to_path = from_path.replace("/src/", "/")
+        compile_file(from_path, to_path, tproc)
 
 compile_site(
     "/src/*.html",
