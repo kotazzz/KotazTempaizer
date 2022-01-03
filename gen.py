@@ -16,51 +16,24 @@ from git import Repo
 
 from typing import Optional
 
-
-class Logger(type):
-    
-
-    @staticmethod
-    def _decorator(fun):
-        @functools.wraps(fun)
-        def wrapper(*args, **kwargs):
-            form = lambda x: [type(i).__name__.split(".")[-1] for i in x]
-            current = f'{fun.__name__} {form(kwargs.values())} {form(args)}'
-            logging.info(f'{current}')
-            
-            return fun(*args, **kwargs)
-
-        return wrapper
-
-    def __new__(mcs, name, bases, attrs):
-
-        logging.basicConfig(
-            filename="main.log",
-            format="%(asctime)s %(levelname)s: %(message)s",
-            encoding="utf-8",
-            level=logging.INFO,
-            datefmt="%m/%d/%Y %I:%M:%S %p",
-        )
-        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+logging.basicConfig(
+    filename="main.log",
+    format="%(asctime)s %(levelname)s: %(message)s",
+    encoding="utf-8",
+    level=logging.INFO,
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
-        for key in attrs.keys():
-            if callable(attrs[key]) and not key.startswith('__'):
-                # if attrs[key] is callable, then we can easily wrap it with decorator
-                # and substitute in the future attrs
-                # only for extra clarity (though it is wider type than function)
-                fun = attrs[key]
-                attrs[key] = Logger._decorator(fun)
-        # and then invoke __new__ in type metaclass
-        return super().__new__(mcs, name, bases, attrs)
 
-
-class TemplateProcessor(metaclass=Logger):
+class TemplateProcessor():
     def __init__(
         self,
         open_tag: Optional[str] = "<python>",
         close_tag: Optional[str] = "</python>",
     ) -> None:
+        logging.info('Создан новый процессор')
         """Процессор, обрабатывающий текст, содержащий "островки" кода, которые будут заменены на результат работы этого кода
 
         :param open_tag: Открывайющий код тег. Defaults to "<python>".
@@ -73,7 +46,6 @@ class TemplateProcessor(metaclass=Logger):
         self.end = close_tag
         self.regex = f"{open_tag}.+?{close_tag}"
         self.global_counter = 0
-
     def process_tag(
         self,
         func_body: str,
@@ -93,6 +65,11 @@ class TemplateProcessor(metaclass=Logger):
         code = f"def {function_name}():\n" + func_body
         compiled = compile(code, function_name, "exec")
         exec(compiled, dict(insert, **globals()), locals())
+
+        autostr_log = "Автоматическое преобразование" if auto_str else "Сырой вид"
+        insert_log = ", дополнительный объект" if insert else ""
+        logging.info(f'Вычисление тега {function_name}... ({autostr_log}{insert_log})')
+
         try:
             if auto_str:
                 results = "".join(map(str, locals()[function_name]()))
@@ -130,6 +107,10 @@ class TemplateProcessor(metaclass=Logger):
         :param insert:Optional[dict]: Дополнительный объект, который будет в словаре globals, предаваемом в exec (Default value = {})
 
         """
+        
+        insert_log = "(Дополнительный объект)" if insert else ""
+        logging.info(f'Обработка текста... {insert_log}')
+
         search_result = re.findall(self.regex, text, re.DOTALL)
         search_result = search_result[::-1]
         max_count = len(search_result)
@@ -154,7 +135,7 @@ class TemplateProcessor(metaclass=Logger):
         return text
 
 
-class Loader(metaclass=Logger):
+class Loader():
     """ """
 
     def get_paths(self, *path_patterns: list[str]) -> list[str]:
@@ -163,9 +144,11 @@ class Loader(metaclass=Logger):
         :param *path_patterns:list[str]: Список паттернов путей
 
         """
+        
         result = []
         for pattern in path_patterns:
             result += glob.glob(os.getcwd() + pattern)
+        logging.info(f'Получение файлов/путей {path_patterns}: {len(result)} результатов')
         return result
 
     def load_data(self, paths: list[str]) -> types.SimpleNamespace:
@@ -174,6 +157,7 @@ class Loader(metaclass=Logger):
         :param paths:list[str]: пути файлов .yml, которые надо загрузить
 
         """
+        logging.info(f'Загрузка данных из {len(paths)} источников')
         data = types.SimpleNamespace()
         for path in paths:
             raw = open(path).read()
@@ -189,6 +173,7 @@ class Loader(metaclass=Logger):
         :param paths:list[str]: пути файлов .html, которые надо загрузить
 
         """
+        logging.info(f'Загрузка плагинов из {len(paths)} источников')
         plugins = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -213,6 +198,7 @@ class Loader(metaclass=Logger):
         :param env:Optional[dict]: Дополнительные объекты для процессора шаблонов (Default value = {})
 
         """
+        logging.info(f'Загрузка шаблонов из {len(paths)} источников')
         templates = types.SimpleNamespace()
         tproc = TemplateProcessor()
         for path in paths:
@@ -225,10 +211,11 @@ class Loader(metaclass=Logger):
         return templates
 
 
-class VerInfo(metaclass=Logger):
+class VerInfo():
     """Содержит некоторую информацию о репозитории, в котором находится скрипт"""
-
+    
     def __init__(self) -> None:
+        logging.info(f'Сборка информации о версии...')
         repo = Repo(search_parent_directories=True)
         commits = list(repo.iter_commits("master", max_count=10000))
         last, first = commits[0], commits[-1]
@@ -248,7 +235,7 @@ class VerInfo(metaclass=Logger):
         self.form_ver = f"1.{ddays}.{commit_count}b"
         self.full_ver = f"R{week}W{day}D{ddays}DD.{commit_count}CC"
         self.version = f"{self.form_ver} ({self.full_ver})"
-
+        logging.info(f'Сборка информации о версии... {self.version}')
     def __str__(self):
         return self.__repr__()
 
@@ -256,7 +243,7 @@ class VerInfo(metaclass=Logger):
         return f"<Version {self.commit_count=} {self.week=} {self.day=} {self.ddays=} {self.form_ver=} {self.full_ver=}>"
 
 
-class Environment(object, metaclass=Logger):
+class Environment(object, ):
     """Среда выполнения для шаблонного процессора, связывающий разные его части"""
 
     def __init__(
@@ -268,20 +255,24 @@ class Environment(object, metaclass=Logger):
             "/templates/**/*.html",
         ],
     ) -> None:
+        logging.info(f'Environment: сборка путей...')
         loader = Loader()
         data_paths = loader.get_paths(*data_path_pattern)
         plugin_paths = loader.get_paths(*plugin_path_pattern)
         template_paths = loader.get_paths(*template_path_pattern)
+        logging.info(f'Environment: загрузка данных...')
         self.data = loader.load_data(data_paths)
         self.plugins = loader.load_plugins(plugin_paths)
         self.templates = loader.load_templates(template_paths, {"env": self})
-
+        
         self.verinfo = VerInfo()
         self.form_ver = self.verinfo.form_ver
         self.full_ver = self.verinfo.full_ver
         self.version = self.verinfo.version
+        logging.info(f'Environment: успех!')
 
 def compile_file(content, to_path, tproc):
+    logging.info(f'Сборка {to_path}')
     """Обработать файл и сохранить в новом месте
 
     :param from_path: путь исходного файла

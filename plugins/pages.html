@@ -3,11 +3,12 @@
         loader = Loader()
         recomp = [[i['file'], i['name'], i['description'], i['content']] for i in data]
         res = ''
+        root = loader.get_paths('')
         for f, n, d, c in recomp:
             
             res += pageforms[0].format(t=n, d=d, l=f'posts/{f}.html')
             page_start, page_content, page_end = pageforms[1]
             content = page_start + page_content.format(t=n, d=d, c=c) + page_end
-            compile_file(content, loader.get_paths('')[0]+f'/posts/{f}.html', tproc)
+            compile_file(content, root[0]+f'/posts/{f}.html', tproc)
         return res
     yield generate_feed
