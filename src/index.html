@@ -29,7 +29,9 @@
                <p>{env.data.main['fulldescription']}</p>
             </div>
             '''
-            yield compile_file
+            data = env.data.main['posts']
+            poster = env.plugins.pages.generate_feed
+            yield poster(data)
             
          </python>
    </body>
