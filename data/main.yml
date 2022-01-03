@@ -11,6 +11,7 @@ fulldescription: |
 
 posts:
   - name: Test post
+    file: testpost
     description: Description
     content: |
       Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis molestias 
