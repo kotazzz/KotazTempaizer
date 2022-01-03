@@ -8,3 +8,12 @@ fulldescription: |
   информацию о проектах и обо мне, а так же последние новости из моей 
   вирутальной жизни. Если есть вопросы - можешь задать их мне - я стараюсь 
   всегда отвечать. Основные соц. сети указаны слева
+
+posts:
+  - name: Test post
+    description: Description
+    content: |
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis molestias 
+      totam ab reprehenderit quidem doloribus, magnam, tenetur asperiores fugiat 
+      illo inventore, delectus voluptates saepe necessitatibus iste sunt omnis a 
+      laboriosam.

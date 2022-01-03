@@ -280,7 +280,7 @@ class Environment(object, metaclass=Logger):
         self.full_ver = self.verinfo.full_ver
         self.version = self.verinfo.version
 
-def compile_file(from_path, to_path, tproc):
+def compile_file(content, to_path, tproc):
     """Обработать файл и сохранить в новом месте
 
     :param from_path: путь исходного файла
@@ -288,7 +288,7 @@ def compile_file(from_path, to_path, tproc):
     :param tproc: процессор
 
     """
-    content = open(from_path).read()
+    
     result = tproc.process(content)
 
     
@@ -317,7 +317,8 @@ def compile_site(*paths) -> None:
     tproc = TemplateProcessor()
     for from_path in files:
         to_path = from_path.replace("/src/", "/")
-        compile_file(from_path, to_path, tproc)
+        content = open(from_path).read()
+        compile_file(content, to_path, tproc)
 
 compile_site(
     "/src/*.html",
