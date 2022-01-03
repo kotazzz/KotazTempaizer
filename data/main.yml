@@ -19,7 +19,27 @@ posts:
       illo inventore, delectus voluptates saepe necessitatibus iste sunt omnis a 
       laboriosam.
   - name: Test post 2 
-    file: testpost2
+    file: testpost27
+    description: Description 2 
+    content: 0
+  - name: Test post 2 
+    file: testpost23
+    description: Description 2 
+    content: 0
+  - name: Test post 2 
+    file: testpost24
+    description: Description 2 
+    content: 0
+  - name: Test post 2 
+    file: testpost25
+    description: Description 2 
+    content: 0
+  - name: Test post 2 
+    file: testpost253
+    description: Description 2 
+    content: 0
+  - name: Test post 2 
+    file: testpost26
     description: Description 2 
     content: |
       Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis molestias 

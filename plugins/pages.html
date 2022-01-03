@@ -1,18 +1,13 @@
-    def generate_feed(data):
+    def generate_feed(data, pageforms):
         tproc = TemplateProcessor()
         loader = Loader()
         recomp = [[i['file'], i['name'], i['description'], i['content']] for i in data]
         res = ''
         for f, n, d, c in recomp:
-            res += f'''<p>
-                {n}, {d}
-            </p>
-            <a href="posts/{f}.html">Посмотреть</a>
-            '''
             
-            compile_file(f'''<p>
-                {n}, {d}, {c}
-                <a href="../index.html">Домой</a>
-            </p>''', loader.get_paths('')[0]+f'/posts/{f}.html', tproc)
+            res += pageforms[0].format(t=n, d=d, l=f'posts/{f}.html')
+            page_start, page_content, page_end = pageforms[1]
+            content = page_start + page_content.format(t=n, d=d, c=c) + page_end
+            compile_file(content, loader.get_paths('')[0]+f'/posts/{f}.html', tproc)
         return res
     yield generate_feed

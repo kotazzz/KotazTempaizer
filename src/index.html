@@ -29,10 +29,50 @@
                <p>{env.data.main['fulldescription']}</p>
             </div>
             '''
-            data = env.data.main['posts']
-            poster = env.plugins.pages.generate_feed
-            yield poster(data)
             
+            
+         </python>
+         <div class="container">
+            <python>
+
+               card = '''
+               <div class="card" style="width: 22rem;">
+                  <div class="card-body">
+                    <h5 class="card-title">{t}</h5>
+                    <p class="card-text">{d}</p>
+                    <a href="{l}" class="btn btn-primary">Посмотреть</a>
+                  </div>
+                </div>
+               '''
+               page = [
+               f'''
+               <!DOCTYPE html>
+               <html lang="en">
+                  {env.templates.head}
+               <body>
+               ''',
+               '''
+               <div class="container">
+                  <h1>{t}</h1>
+                  <h3>{d}</h3>
+                  <p>{c}</p>
+               </div>
+               ''',
+               f'''
+                  {env.templates.scripts}
+               </body>
+               </html>
+               '''
+               ]
+               
+               data = env.data.main['posts']
+               poster = env.plugins.pages.generate_feed
+               cards = '<div class="card-columns">' + poster(data, [card, page]) + '</div>'
+               yield cards
+            </python>
+         </div>
+         <python>
+            yield env.templates.scripts
          </python>
    </body>
 </html>
