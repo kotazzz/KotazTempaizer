@@ -6,6 +6,7 @@ import sys
 import traceback
 import types
 import logging
+import errno
 from datetime import datetime
 from inspect import currentframe, getframeinfo
 
