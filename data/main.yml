@@ -18,3 +18,11 @@ posts:
       totam ab reprehenderit quidem doloribus, magnam, tenetur asperiores fugiat 
       illo inventore, delectus voluptates saepe necessitatibus iste sunt omnis a 
       laboriosam.
+  - name: Test post 2 
+    file: testpost2
+    description: Description 2 
+    content: |
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis molestias 
+      totam ab reprehenderit quidem doloribus, magnam, tenetur asperiores fugiat 
+      illo inventore, delectus voluptates saepe necessitatibus iste sunt omnis a 
+      laboriosam. 2
